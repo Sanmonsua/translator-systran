@@ -1,46 +1,54 @@
-document.addEventListener('DOMContentLoaded', () =>{
+document.addEventListener('DOMContentLoaded', function onDocumentLoad() {
+	requestLanguages()
 
-    lang_request = new XMLHttpRequest();
-    lang_request.open('GET', '/languages');
-
-    lang_request.onload = () =>{
-      const data = JSON.parse(lang_request.responseText);
-      console.log(data.languages[0]);
-      const select = document.querySelector('#select-lang');
-      data.languages.forEach(lang => {
-        const opt = document.createElement('option');
-        opt.setAttribute('value', lang.code);
-        opt.innerHTML = lang.name;
-        select.appendChild(opt);
-      });
-
-    }
-    lang_request.send();
-
-    document.querySelector('#form-translate').onsubmit = () =>{
-      const translate_request = new XMLHttpRequest();
-      translate_request.open('POST', '/translate');
-
-      translate_request.onload = () => {
-        const data = JSON.parse(translate_request.responseText);
-
-        if (data.success){
-          let result = document.createElement('h6');
-          result.innerHTML = `Translate from ${data.source} : ${data.result}`;
-          document.querySelector('#results').appendChild(result);
-        } else{
-          alert(data.message);
-        }
-      }
-
-      const data = new FormData();
-      const input = document.querySelector('#to-translate').value;
-      data.append('input', input);
-      const select = document.querySelector('#select-lang');
-      const opt = select.options[select.selectedIndex];
-      data.append('target', opt.value);
-      translate_request.send(data);
-
-      return false;
-    }
+	document.querySelector('#form-translate').onsubmit = onSubmitForm
 })
+
+function requestLanguages() {
+	var langRequest = new XMLHttpRequest()
+	langRequest.open('GET', '/languages')
+
+	langRequest.onload = () => {
+		var { languages } = JSON.parse(langRequest.responseText)
+		var select = document.querySelector('#select-lang')
+		languages.forEach(loadLang)
+
+		function loadLang(language) {
+			var { code, name } = language
+			var opt = document.createElement('option')
+			opt.setAttribute('value', code)
+			opt.innerHTML = name
+			select.appendChild(opt)
+		}
+	}
+	langRequest.send()
+}
+
+function onSubmitForm() {
+	const translateRequest = new XMLHttpRequest()
+	translateRequest.open('POST', '/translate')
+
+	translateRequest.onload = function loadTranslateRequest() {
+		var { success, source, result, message } = JSON.parse(
+			translateRequest.responseText
+		)
+
+		if (success) {
+			let resultElement = document.createElement('h6')
+			result.innerHTML = `Translate from ${source} : ${result}`
+			document.querySelector('#results').appendChild(resultElement)
+		} else {
+			alert(message)
+		}
+	}
+
+	var data = new FormData()
+	var input = document.querySelector('#to-translate').value
+	data.append('input', input)
+	var select = document.querySelector('#select-lang')
+	var opt = select.options[select.selectedIndex]
+	data.append('target', opt.value)
+	translateRequest.send(data)
+
+	return false
+}
